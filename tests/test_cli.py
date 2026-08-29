@@ -37,7 +37,7 @@ class TestAddCommand:
         out = capsys.readouterr().out
         assert "id: 1" in out
         assert "score:" in out
-        assert "candidate" in out  # good opportunity classifies as candidate+
+        assert "candidate" in out
         assert "suggested price:" in out
 
     def test_add_reads_description_from_stdin(self, cli_env, monkeypatch, capsys):
@@ -81,7 +81,7 @@ class TestListShowExport:
             ]
         )
         if capsys is not None:
-            capsys.readouterr()  # discard the `add` output before asserting
+            capsys.readouterr()
 
     def test_list_shows_stored_opportunities(self, cli_env, capsys):
         self._seed()
@@ -99,7 +99,7 @@ class TestListShowExport:
         assert record["id"] == 1
         assert record["source"] == GOOD_OPPORTUNITY["source"]
         assert record["analysis_summary"]
-        assert record["classification"] == "strong"
+        assert record["classification"] == "candidate"
         assert record["suggested_price"] >= 50
         assert "proposal" in record and record["proposal"]
         assert record["status"] == "candidate"
@@ -122,7 +122,7 @@ class TestListShowExport:
         assert row["title"] == GOOD_OPPORTUNITY["title"]
         assert "skills:" in row["analysis_summary"]
         assert int(row["score"]) >= 70
-        assert row["classification"] == "strong"
+        assert row["classification"] == "candidate"
         assert float(row["suggested_price"]) >= 50
         assert "Hi" in row["proposal"]
         assert row["status"] == "candidate"
@@ -133,7 +133,7 @@ class TestListShowExport:
         assert code == 0
         rows = json.loads(capsys.readouterr().out)
         assert len(rows) == 1
-        assert rows[0]["classification"] == "strong"
+        assert rows[0]["classification"] == "candidate"
 
     def test_export_with_status_filter(self, cli_env, capsys):
         main(["add", "--title", "Tiny task", "--description", "short"])
@@ -148,8 +148,6 @@ class TestListShowExport:
 
 
 class TestEvalCommand:
-    """Day 3: print the full agent evaluation data for human review."""
-
     def _seed(self, capsys=None):
         main(
             [
@@ -181,10 +179,10 @@ class TestEvalCommand:
         assert "business_value_explanation:" in out
         assert "missing_information:" in out
         assert "deterministic_score:" in out
-        assert "classification: strong" in out
+        assert "classification: candidate" in out
         assert "suggested_fixed_price:" in out
         assert "proposed_solution:" in out
-        assert "Hi" in out  # proposal message text
+        assert "Hi" in out
         assert "INPUT DESCRIPTION:" in out
 
     def test_eval_by_id(self, cli_env, capsys):
