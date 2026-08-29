@@ -1,17 +1,4 @@
-"""OpenAI-compatible LLM provider.
-
-Works with any endpoint that implements the OpenAI chat-completions API
-(OpenAI, OpenRouter, Groq, local vLLM/LiteLLM servers, ...). Configuration
-comes exclusively from environment variables — API keys are never hardcoded.
-
-Contract with the model:
-  - Structured JSON output (response_format json_object).
-  - Output is validated with the strict LLMAnalysis schema before it enters
-    the scoring pipeline.
-  - Invalid/missing data raises a controlled LLMResponseError.
-  - The LLM NEVER produces the final score; scoring stays deterministic in
-    app/services/scorer.py.
-"""
+"""OpenAI-compatible LLM provider."""
 from __future__ import annotations
 
 import json
@@ -31,15 +18,15 @@ _SYSTEM_PROMPT = (
     "Analyze the given opportunity and respond ONLY with a JSON object with "
     "exactly these keys:\n"
     "{\n"
-    '  "problem": string,  // the client problem in one clear sentence\n'
-    '  "required_skills": string[],  // short skill names\n'
+    '  "problem": string,\n'
+    '  "required_skills": string[],\n'
     '  "difficulty": "easy" | "medium" | "hard",\n'
-    '  "estimated_execution_time": string,  // e.g. "4 hours", "1-2 days"\n'
-    '  "estimated_price_min": number,  // realistic fixed price in USD\n'
+    '  "estimated_execution_time": string,\n'
+    '  "estimated_price_min": number,\n'
     '  "estimated_price_max": number,\n'
-    '  "confidence": number,  // 0.0 to 1.0, how sure the analysis is\n'
-    '  "business_value_explanation": string,  // why solving this matters\n'
-    '  "missing_information": string[]  // assumptions made or missing info\n'
+    '  "confidence": number,\n'
+    '  "business_value_explanation": string,\n'
+    '  "missing_information": string[]\n'
     "}\n"
     "Do NOT return any score, ranking or classification — the application "
     "scores opportunities deterministically on its own."
@@ -54,62 +41,48 @@ def _strip_code_fences(content: str) -> str:
     return text.strip()
 
 
+def _parse_estimated_hours(label: str) -> float | None:
+    """Convert common LLM duration labels to an approximate hour count.
+
+    For ranges we use the upper bound so the scorer stays conservative.
+    Unknown/free-form labels remain None instead of guessing.
+    """
+    text = label.strip().lower()
+    numbers = [float(n) for n in re.findall(r"\d+(?:\.\d+)?", text)]
+    if not numbers:
+        return None
+    amount = max(numbers)
+    if "minute" in text or "min" in text:
+        return amount / 60.0
+    if "hour" in text or re.search(r"\bhrs?\b", text):
+        return amount
+    if "day" in text:
+        return amount * 8.0
+    if "week" in text:
+        return amount * 40.0
+    return None
+
+
 class OpenAICompatibleProvider(AIProvider):
-    def __init__(
-        self,
-        api_key: str,
-        base_url: str = "https://api.openai.com/v1",
-        model: str = "gpt-4o-mini",
-        timeout_seconds: float = 30.0,
-        client: httpx.Client | None = None,
-    ) -> None:
+    def __init__(self, api_key: str, base_url: str = "https://api.openai.com/v1", model: str = "gpt-4o-mini", timeout_seconds: float = 30.0, client: httpx.Client | None = None) -> None:
         if not api_key:
-            raise ConfigurationError(
-                "OpenAI-compatible provider requires an API key "
-                "(set OPENAI_API_KEY)."
-            )
+            raise ConfigurationError("OpenAI-compatible provider requires an API key (set OPENAI_API_KEY).")
         self._model = model
         self._api_key = api_key
-        self._client = client or httpx.Client(
-            base_url=base_url,
-            timeout=timeout_seconds,
-            headers={"Content-Type": "application/json"},
-        )
+        self._client = client or httpx.Client(base_url=base_url, timeout=timeout_seconds, headers={"Content-Type": "application/json"})
 
     def analyze(self, opportunity: OpportunityInput) -> Analysis:
-        raw = self._call_llm(opportunity)
-        validated = self._validate(raw)
-        return self._to_analysis(validated)
-
-    # --- LLM call ---------------------------------------------------------
+        return self._to_analysis(self._validate(self._call_llm(opportunity)))
 
     def _post_chat(self, payload: dict) -> httpx.Response:
-        """Auth header is attached per-request so it also works when a
-        pre-built client is injected (e.g. in tests)."""
-        return self._client.post(
-            "/chat/completions",
-            json=payload,
-            headers={"Authorization": f"Bearer {self._api_key}"},
-        )
+        return self._client.post("/chat/completions", json=payload, headers={"Authorization": f"Bearer {self._api_key}"})
 
     def _call_llm(self, opportunity: OpportunityInput) -> dict:
         payload = {
             "model": self._model,
             "messages": [
                 {"role": "system", "content": _SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": json.dumps(
-                        {
-                            "source": opportunity.source,
-                            "title": opportunity.title,
-                            "description": opportunity.description,
-                            "url": opportunity.url,
-                            "client_name": opportunity.client_name,
-                            "market": opportunity.market,
-                        }
-                    ),
-                },
+                {"role": "user", "content": json.dumps({"source": opportunity.source, "title": opportunity.title, "description": opportunity.description, "url": opportunity.url, "client_name": opportunity.client_name, "market": opportunity.market})},
             ],
             "temperature": 0.2,
             "response_format": {"type": "json_object"},
@@ -118,26 +91,19 @@ class OpenAICompatibleProvider(AIProvider):
             response = self._post_chat(payload)
         except httpx.HTTPError as exc:
             raise LLMResponseError(f"Could not reach the LLM API: {exc}") from exc
-
         if response.status_code != 200:
-            raise LLMResponseError(
-                f"LLM API returned HTTP {response.status_code}: {response.text[:300]}"
-            )
-
+            raise LLMResponseError(f"LLM API returned HTTP {response.status_code}: {response.text[:300]}")
         try:
             body = response.json()
             content = body["choices"][0]["message"]["content"]
         except (ValueError, KeyError, IndexError, TypeError) as exc:
-            raise LLMResponseError(
-                f"LLM API response has unexpected structure: {exc}"
-            ) from exc
-
+            raise LLMResponseError(f"LLM API response has unexpected structure: {exc}") from exc
+        if not isinstance(content, str) or not content.strip():
+            raise LLMResponseError("LLM returned empty content (HTTP 200)")
         try:
             return json.loads(_strip_code_fences(content))
         except ValueError as exc:
             raise LLMResponseError(f"LLM returned malformed JSON: {exc}") from exc
-
-    # --- validation -------------------------------------------------------
 
     @staticmethod
     def _validate(raw: dict) -> LLMAnalysis:
@@ -146,11 +112,7 @@ class OpenAICompatibleProvider(AIProvider):
         try:
             return LLMAnalysis.model_validate(raw)
         except ValidationError as exc:
-            raise LLMResponseError(
-                f"LLM returned invalid or missing data: "
-                f"{exc.error_count()} validation error(s), first: "
-                f"{exc.errors()[0]['msg']}"
-            ) from exc
+            raise LLMResponseError(f"LLM returned invalid or missing data: {exc.error_count()} validation error(s), first: {exc.errors()[0]['msg']}") from exc
 
     @staticmethod
     def _to_analysis(validated: LLMAnalysis) -> Analysis:
@@ -159,7 +121,7 @@ class OpenAICompatibleProvider(AIProvider):
             required_skills=validated.required_skills,
             difficulty=Difficulty(validated.difficulty),
             estimated_time=validated.estimated_execution_time,
-            estimated_hours=None,  # label only; scorer handles unknown hours
+            estimated_hours=_parse_estimated_hours(validated.estimated_execution_time),
             price_min=validated.estimated_price_min,
             price_max=validated.estimated_price_max,
             confidence=validated.confidence,

@@ -1,0 +1,72 @@
+[
+  {
+    "source": "upwork",
+    "title": "Fix Mobile Layout Issues on WordPress (Elementor)",
+    "url": "https://www.upwork.com/freelance-jobs/apply/Fix-Mobile-Layout-Issues-WordPress-Elementor_~022093407029953569205/",
+    "market": "Global / English",
+    "description": "Existing WordPress/Elementor website. Desktop is complete; mobile/tablet sections overlap or misalign. Fix responsive layout without changing desktop design. Fixed budget $50; small quick task."
+  },
+  {
+    "source": "upwork",
+    "title": "Flutter Developer Needed for Quick API Integration & UI Tweaks",
+    "url": "https://www.upwork.com/freelance-jobs/apply/Flutter-Developer-Needed-for-Quick-API-Integration-Tweaks_~022093468794947326675/",
+    "market": "Global / English",
+    "description": "Existing Flutter app. Integrate one REST endpoint, connect to existing Firebase backend, and make minor spacing/alignment/styling changes on 2-3 screens. Fixed $50 trial task, delivery within one week, potential ongoing work."
+  },
+  {
+    "source": "upwork",
+    "title": "Flutter Developer to Fix Bugs & Add Small Features",
+    "url": "https://www.upwork.com/freelance-jobs/apply/Flutter-Developer-Fix-Bugs-Add-Small-Features_~022088921594963271312/",
+    "market": "Global / English",
+    "description": "Existing live Flutter Android/iOS app. Fix UI glitches, investigate one intermittently failing API call, and add simple search to an existing list. Fixed $150, about one week."
+  },
+  {
+    "source": "upwork",
+    "title": "Urgent WordPress Elementor IDX Broker Developer Needed Today",
+    "url": "https://www.upwork.com/freelance-jobs/apply/Urgent-WordPress-Elementor-IDX-Broker-Developer-Needed-Today_~022093636821856559541/",
+    "market": "Global / English",
+    "description": "Existing real-estate WordPress site needs several minor launch fixes today: Elementor, IDX Broker/Omnibar integration troubleshooting and responsive adjustments. Fixed $150. Requires immediate availability and specific IDX Broker experience."
+  },
+  {
+    "source": "upwork",
+    "title": "Wordpress Website page from mysql in categories",
+    "url": "https://www.upwork.com/freelance-jobs/apply/Wordpress-Website-page-from-mysql-categories_~022093136887222741509/",
+    "market": "Global / English",
+    "description": "Existing rebuilt WordPress site lost an old plugin after data loss. Client needs an easy admin-editable way to maintain entries in four categories annually. Fixed $75. One-time project; no off-platform contact."
+  },
+  {
+    "source": "upwork",
+    "title": "Professional Website Design & Development for Architecture Firm",
+    "url": "https://www.upwork.com/freelance-jobs/apply/Professional-Website-Design-Development-for-Architecture-Firm_~022093608439282164836/",
+    "market": "Global / English",
+    "description": "Architecture firm wants a modern responsive portfolio/business website; branding, images and content provided. Fixed $100. Requires portfolio examples. Broader than a bug fix and included to test scope discipline."
+  },
+  {
+    "source": "upwork",
+    "title": "Web Developer with AI Skills",
+    "url": "https://www.upwork.com/freelance-jobs/apply/Web-Developer-with-Skills_~022093354950098493654/",
+    "market": "Global / English",
+    "description": "Ongoing Shopify/WordPress development, ecommerce optimization, API/payment/CRM integrations and optional AI/automation work. Fixed $75 initial listing. Broad scope; included to test whether unclear/big jobs are penalized."
+  },
+  {
+    "source": "upwork",
+    "title": "Full Stack Developer for AI Project",
+    "url": "https://www.upwork.com/freelance-jobs/apply/Full-Stack-Developer-for-Project_~022093550433832280501/",
+    "market": "Global / English",
+    "description": "Build an AI-powered web application connecting Django and Next.js with LLM chat, authentication, chat history and real-time interactions. Fixed $150. Production-ready expectations make scope large for budget; negative-control for scope/value realism."
+  },
+  {
+    "source": "upwork",
+    "title": "Updates to an existing flutter app",
+    "url": "https://www.upwork.com/freelance-jobs/apply/Updates-existing-flutter-app_~022093160191700440171/",
+    "market": "Global / English",
+    "description": "Existing Flutter game becomes slow and Google Maps gets stuck during zoom. Client wants debugging and a fix. Fixed budget $5. Economic-control: should be rejected despite technical fit."
+  },
+  {
+    "source": "upwork",
+    "title": "WordPress Elementor Developer Needed for Responsive Layout Fixes",
+    "url": "https://www.upwork.com/freelance-jobs/apply/WordPress-Elementor-Developer-Needed-for-Responsive-Layout-Fixes_~022092990516234660357/",
+    "market": "Global / English",
+    "description": "Existing WordPress/Elementor site needs spacing, alignment, responsive and overlapping-element fixes within 1-2 days. Fixed $40. Economic boundary-control: below the Fix50 minimum and should not enter the pursuit queue."
+  }
+]

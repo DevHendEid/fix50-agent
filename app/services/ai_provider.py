@@ -25,11 +25,7 @@ class AIProvider(ABC):
 
 
 def build_provider(name: str, settings: Settings | None = None) -> AIProvider:
-    """Factory: create the provider configured via settings/env.
-
-    Raises ConfigurationError (a controlled, clearly-worded error) when the
-    chosen provider is missing required configuration, e.g. an API key.
-    """
+    """Factory: create the provider configured via settings/env."""
     name = name.lower()
     if name == "mock":
         return MockAIProvider()
@@ -40,27 +36,18 @@ def build_provider(name: str, settings: Settings | None = None) -> AIProvider:
                 "AI_PROVIDER is set to 'openai' but OPENAI_API_KEY is not set. "
                 "Set it in your .env file or environment."
             )
-        # Imported lazily to keep the mock-only path free of HTTP client wiring.
         from app.services.openai_provider import OpenAICompatibleProvider
-
         return OpenAICompatibleProvider(
             api_key=settings.openai_api_key,
             base_url=settings.openai_base_url,
             model=settings.openai_model,
             timeout_seconds=settings.openai_timeout_seconds,
         )
-    raise ValueError(
-        f"Unknown AI provider '{name}'. Available: mock, openai"
-    )
+    raise ValueError(f"Unknown AI provider '{name}'. Available: mock, openai")
 
 
 class MockAIProvider(AIProvider):
-    """Deterministic, rule-based provider.
-
-    Produces a sensible analysis from keywords and text statistics so the
-    whole pipeline (analysis -> scoring -> proposal -> persistence) can be
-    exercised and tested without any paid API access.
-    """
+    """Deterministic, rule-based provider used for zero-cost tests and demos."""
 
     _SKILL_KEYWORDS: dict[str, list[str]] = {
         "python": ["python", "django", "flask", "fastapi", "pandas", "script"],
@@ -76,21 +63,18 @@ class MockAIProvider(AIProvider):
         "design": ["design", "figma", "logo", "ui", "ux"],
         "frontend": ["html", "css", "landing page", "website", "responsive"],
     }
-
     _TIME_LABELS = {
         Difficulty.EASY: "4 hours",
         Difficulty.MEDIUM: "1-2 days",
         Difficulty.HARD: "3-5 days",
         Difficulty.UNKNOWN: "unknown",
     }
-
     _HOURS = {
         Difficulty.EASY: 4.0,
         Difficulty.MEDIUM: 8.0,
         Difficulty.HARD: 24.0,
         Difficulty.UNKNOWN: None,
     }
-
     _PRICE_RANGES = {
         Difficulty.EASY: (50.0, 120.0),
         Difficulty.MEDIUM: (100.0, 300.0),
@@ -99,12 +83,7 @@ class MockAIProvider(AIProvider):
     }
 
     def analyze(self, opportunity: OpportunityInput) -> Analysis:
-        text = " ".join(
-            part
-            for part in (opportunity.title, opportunity.description or "")
-            if part
-        ).lower()
-
+        text = " ".join(part for part in (opportunity.title, opportunity.description or "") if part).lower()
         skills = self._detect_skills(text)
         difficulty = self._estimate_difficulty(opportunity, skills)
         return Analysis(
@@ -116,22 +95,19 @@ class MockAIProvider(AIProvider):
             price_min=self._PRICE_RANGES[difficulty][0],
             price_max=self._PRICE_RANGES[difficulty][1],
             confidence=self._estimate_confidence(opportunity),
+            business_value_explanation=None,
+            missing_information=None,
         )
 
     def _detect_skills(self, text: str) -> list[str]:
         detected = [
             skill
             for skill, keywords in self._SKILL_KEYWORDS.items()
-            if any(
-                re.search(rf"\b{re.escape(keyword)}\b", text) is not None
-                for keyword in keywords
-            )
+            if any(re.search(rf"\b{re.escape(keyword)}\b", text) is not None for keyword in keywords)
         ]
         return detected or ["general_programming"]
 
-    def _estimate_difficulty(
-        self, opportunity: OpportunityInput, skills: list[str]
-    ) -> Difficulty:
+    def _estimate_difficulty(self, opportunity: OpportunityInput, skills: list[str]) -> Difficulty:
         word_count = len((opportunity.description or "").split())
         if word_count > 150 or len(skills) >= 4:
             return Difficulty.HARD
@@ -142,7 +118,6 @@ class MockAIProvider(AIProvider):
     def _extract_problem(self, opportunity: OpportunityInput) -> str:
         description = (opportunity.description or "").strip()
         if description:
-            # First sentence(s) are the best available signal of the problem.
             match = re.match(r"^(.+?[.!?])(\s|$)", description, flags=re.DOTALL)
             return (match.group(1) if match else description).strip()
         return f"Client needs help with: {opportunity.title.strip()}"
